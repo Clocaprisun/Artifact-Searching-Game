@@ -8,16 +8,13 @@
 #define EMPTY_SPOT -1
 #define LOOP_RESET 0
 #define LOOP_BREAK 1
-
-int menu(){
-    printf("THIS IS A MENU AHAHAHAHHA");
-    return 0;
-}
+#define INITALIZE 0
 
 int main(){
-    int height = 0; int width = 0;
-    int i, j, loopCondition = LOOP_RESET;
-    int maxArtifacts, numOfArtifacts = 0;
+    int height, width = INITALIZE;
+    int maxArtifacts, numOfArtifacts = INITALIZE;
+    int i, j = INITALIZE; 
+    int loopCondition = LOOP_RESET;
     char input[100];
     
 
@@ -132,6 +129,78 @@ int main(){
         }
     }
 
+
+    /*Print the map - without anything extra*/
+    loopCondition = LOOP_RESET;
+    while(!loopCondition){
+        printf("Map:\n\t");
+        for (i = 0; i < width; i++) {
+            printf("%d", i / 10);
+        }
+        printf("\n\t");
+        for (i = 0; i < width; i++) {
+            printf("%d", i % 10);
+        }
+        printf("\n\t");
+        for (i = 0; i < width; i++) {
+            printf("-");
+        }
+        printf("\n");
+
+        for (i = 0; i < height; i++) {
+            if (i < 10){
+                printf("     0%d|", i);
+            } else {
+                printf("     %2d|", i);
+            }
+            for (j = 0; j < width; j++) {
+                printf(" ");
+            }
+            printf("\n");
+        }
+
+
+        int menuChoice = INITALIZE;
+        printf("1: Dig at a spot\n2:Exit\n3:Activate debug mode\n ->");
+        scanf("%d", &menuChoice);
+        switch(menuChoice){
+            case 1:
+                break;
+            case 2:
+                int running = 0;
+                break;
+            case 3:
+                // Debug Map Output
+                printf("\nMap:\n\t");
+                for (i = 0; i < width; i++) {
+                    printf("%d", i / 10);
+                }
+                printf("\n\t");
+                for (i = 0; i < width; i++) {
+                    printf("%d", i % 10);
+                }
+                printf("\n\t");
+                for (i = 0; i < width; i++) {
+                    printf("-");
+                }
+                printf("\n");
+
+                for (i = 0; i < height; i++) {
+                    printf(" %4d|", i);
+                    for (j = 0; j < width; j++) {
+                        if (arr[i][j] != EMPTY_SPOT) {
+                            printf("?");
+                        } else {
+                            printf(" ");
+                        }
+                    }
+                    printf("\n");
+                }
+                break;
+        }
+    }
+    
+
     /*STUPID CHAT THING TO PRINT THE STUFF SO IK IM NOT INSANEEEE AHAHAHA*/
     printf("\nArtifact Codes and Their Locations:\n");
 
@@ -152,59 +221,9 @@ int main(){
         printf("\n");
     }  
 return EXIT_SUCCESS;
-}
+    }
 
 /*
-int function menu(){
-for loop
-for loop    
-;
-}
-
-int function dig(){
-; while numOfArtifacts != 0
-}
-
-int function debug(){
-    ;
-}
-*/
-/* main()
-    ask user for input, height and width
-        - minimum 2, maximum 40
-        - allocate that as a 2d array, using pointers
-            -suggested to do this as an array of arrays
-
-    
-    Ask user to input how many artifacts they want to add
-        -need input codes for each artifact
-            - codes are one letter and 3 digits
-            - verify correctness
-                - each code will be checked
-                - lowercase letter = lesser artifact(1 points) else 2 points
-                - each artifact must be unique 
-            - each artifact will gain a randomly assigned corrdinate
-
-
-        
-    User will guess where artifact is by entering x and y
-        -check data if artifact was found, if so which one 
-            - if fail how far away is the artifact
-                -at 10 or more away mark an x, #
-
-	Load data stuff
-
-Function menu()
-	Switch case menu
-		Option 1 - function dig
-		Option 2 - exit
-		Option 3 - debug function
-
-Function dig()
-
-
-Function debug()
-
 Extra things:
 - error handling
     - game map must be big enough
@@ -216,57 +235,4 @@ Extra things:
         - square root((player input x - artifact y)^2 + (player input y - artifact y)^2)
         - if found do a ! symbol
         - debug mode shows location of artifacts
-
-
-
-Average user experience - entry
-0 1 2 3 4 5 6
-1**************
-2**************
-3**************
-4**************
-5**************
-6**************
-
-
-Debug mode (? - unfound, ! - found)
-0 1 2 3 4 5 6
-1  ?
-2
-3     !         ?
-4
-5
-6       ?
-
-
-Average user experience - while playing(# - farther than 9)
-0 1 2 3 4 5 6
-1*****#*********
-2**************
-3*#*************
-4**********!***
-5**************
-6****!**********
-
-
-Another user experience
-0 1 2 3 4 5 6
---------------------
-1|*****#*********
-2|**************
-3|*#*****2*******
-4|**********!***
-5|***1**********
-6|****!**********
-
-
-
-0 1 2 3 4 5 6
---------------------
-1|*****#*********
-2|**************
-3|*#*****2*******
-4|**********!***
-5|***1**********
-6|****!**********
 */
