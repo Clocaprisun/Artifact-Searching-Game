@@ -1,113 +1,157 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 #define MAX_SIZE 40
 #define MIN_SIZE 2
+#define EMPTY_SPOT -1
+#define LOOP_RESET 0
+#define LOOP_BREAK 1
+
 int menu(){
     printf("THIS IS A MENU AHAHAHAHHA");
     return 0;
 }
 
 int main(){
-    /*ask user for height and width of map*/
     int height = 0; int width = 0;
-    int i, j, loop = 0;
-    int maxArtifacts, numOfArtifacts;
+    int i, j, loopCondition = LOOP_RESET;
+    int maxArtifacts, numOfArtifacts = 0;
+    char input[100];
     
-    while(loop == 0){
-        int stupidvar = 0; /*checks validity of variables(are they integers?) */
-        printf("Enter map height: "); if (scanf(" %d", &height) == 1) stupidvar = 1;
-        printf("Enter map width: ");  if (scanf(" %d", &width)  == 1) stupidvar = 1;
-        if (stupidvar == 0){
-            printf("Error: input is in incorrect format, re-enter with an integer value\n");
-            height = 0; width = 0; /*reset variables*/
-            continue;
+
+    /*ask user for height and width of map*/
+    while (!loopCondition){
+        printf("Enter map height: "); 
+        while (fgets(input, sizeof(input), stdin)){
+            if (sscanf(input," %d", &height) == 1){
+                break;
+            } else {
+                printf("Error: height input is in incorrect format, re-enter with an integer value\nEnter map height: ");
+            }
         }
         /*checks if height is out of bounds*/
         if (height < MIN_SIZE || height > MAX_SIZE) {
             printf("Error: height out of bounds - enter an integer between %d - %d\n", MIN_SIZE, MAX_SIZE);
             continue;
         }
+        
+
+        printf("Enter map width: "); 
+        while (fgets(input, sizeof(input), stdin)){
+            if (sscanf(input," %d", &width) == 1){
+                break;
+            } else {
+                printf("Error: width input is in incorrect format, re-enter with an integer value\nEnter map width: ");
+            }
+        }
         /*checks if width is out of bounds*/
         if (width < MIN_SIZE || width > MAX_SIZE) {
             printf("Error: width out of bounds - enter an integer between %d - %d\n", MIN_SIZE, MAX_SIZE);
             continue;
         }
-        loop = 1; /*exit loop*/
+        loopCondition = LOOP_BREAK; /*exit loop*/
     }
+
 
     /*creates a 2d array based on height and width*/
     int **arr;
     arr = malloc(height * sizeof(int *));
     for (i = 0; i < height; i++) {
         *(arr + i) = malloc(width * sizeof(int));
+        for (j = 0; j < width; j++) {
+        *(*(arr + i) + j) = EMPTY_SPOT;
+        }
     }
+
 
     /*creates the artifact amount*/
     maxArtifacts = (height * width); /*upper bound is height * width*/
-    numOfArtifacts = 0;
-    loop = 0;
-    while(loop == 0){
+    loopCondition = LOOP_RESET;
+    while(!loopCondition){
         /*asks user for an amount of artifacts, checks validity*/
-        printf("Enter the number of artifacts: "); if (scanf("%d", &numOfArtifacts) != 1){
-            printf("Error: input is in incorrect format, re-enter with an integer value \n");
-            numOfArtifacts = 0;
-            continue;
+        printf("Enter the number of artifacts: "); 
+        while (fgets(input, sizeof(input), stdin)){
+            if (sscanf(input," %d", &numOfArtifacts) == 1){
+                break;
+            } else {
+                printf(("Error: input is in incorrect format, re-enter with an integer value \nEnter the number of artifacts: "));
+            }
         }
         /*checks if number of artifacts is above one and less than max*/
         if (numOfArtifacts < 1 || numOfArtifacts > maxArtifacts){
             printf("Error: number of artifacts out of bounds - enter a number between 1 - %d\n", maxArtifacts);
             continue;
         }
-        loop = 1;
+        loopCondition = LOOP_BREAK;
     }
+
 
     /* user adds a code to the artifact(s)*/
     char *artifactCode = malloc(5 * sizeof(char)); /*an array to store the artifact code - useful for validity and such and such*/
-    char *artifactCodeIndex = malloc(numOfArtifacts * sizeof(char)); /*an array to store the artifact codes*/
-    for (i = 0; i < numOfArtifacts; i++){
-        /*user input for code*/
-        printf("Code for atrifact %d:", i + 1); scanf("%s", artifactCode);
-        /*checks if code is in format ex. char digit digit digit EOF-symbol*/
-        if (!isalpha(*(artifactCode)) || !isdigit(*(artifactCode + 1)) || !isdigit(*(artifactCode + 2)) || !isdigit(*(artifactCode + 3)) || *(artifactCode + 4) != '\0') {
+    char **artifactCodeIndex = malloc(numOfArtifacts * sizeof(char *)); /*an array to store the artifact codes*/
+    for (i=0; i<numOfArtifacts; i++){
+        *(artifactCodeIndex + i) = malloc(5 * sizeof(char));
+
+
+        while(1){
+            printf("Code for atrifact %d:", i + 1); 
+            scanf("%4s", artifactCode);
+
+            if (!isalpha(*(artifactCode)) || !isdigit(*(artifactCode + 1)) || !isdigit(*(artifactCode + 2)) || !isdigit(*(artifactCode + 3)) || *(artifactCode + 4) != '\0') {
             printf("Error: input is in incorrect format, re-enter with a valid code (ex. S743, y824)\n");
-            i--;
             continue;
         }
-        /*checks the index if the code exists already or not(iteration)*/
-        for (j=0; j < i; j++){
-            if(*(artifactCodeIndex + j) == *(artifactCode)){
-                printf("Error: code already exists in database, re-enter a different valid code (ex. S743, y824)\n");
-                i--;
-                
-            }
-        } 
-        printf("Penis");
-        *(artifactCodeIndex + i) = *(artifactCode); /*stores the first character(since the only thing needed later is if it is upper or lower case)*/
-    }
-    printf("Penis");
 
+
+        int exists = 0;
+        for (j = 0; j < i; j++) {
+            if (strcmp(artifactCode, *(artifactCodeIndex + j)) == 0) {
+                exists = 1;
+                break;
+            }
+        }
+        if(exists){
+            printf("Error: code already exists in database, re-enter a different valid code (ex. S743, y824)\n");
+            continue;
+        }
+        strcpy(*(artifactCodeIndex + i), artifactCode);
+        break;
+        }
+    }
     
+
     /*put artifacts into random spot in the 2d array*/
     for (i = 0; i < numOfArtifacts; i++){
         int artifactx = rand() % (height); int artifacty = rand() % (width); /* random % (max - min + 1) + min | min = 0 */
-        if (*(*(arr + artifactx) + artifacty) == 0){  /*same as arr[artifactx][artifacty], checks if the spot is empty(no artifacts are there); TODOOOOO compares only the first char lol crazy*/
-            /*adds artifact to that spot
-            TODOOOOO, only ads the first character right now i am lazy, logic is there lol*/
-            *(*(arr + artifactx) + artifacty) = *(artifactCodeIndex + i);
+        if (*(*(arr + artifactx) + artifacty) == -1) {
+            *(*(arr + artifactx) + artifacty) = i;
         } else {
             i--;
         }
     }
 
-    printf("Penis");
+    /*STUPID CHAT THING TO PRINT THE STUFF SO IK IM NOT INSANEEEE AHAHAHA*/
+    printf("\nArtifact Codes and Their Locations:\n");
 
-    /*Prints menu and collects choice*/
-    menu();
-    /*dig site main part*/
-    
-return 0;
+    for (i = 0; i < numOfArtifacts; i++) {
+        printf("Code %s is at positions:\n", artifactCodeIndex[i]);
+        int found = 0;
+        for (int x = 0; x < height; x++) {
+            for (int y = 0; y < width; y++) {
+                if (arr[x][y] == i) {
+                    printf("  (%d, %d)\n", x, y);
+                    found = 1;
+                }
+            }
+        }
+        if (!found) {
+            printf("  (Not placed on the grid)\n");
+        }
+        printf("\n");
+    }  
+return EXIT_SUCCESS;
 }
 
 /*
