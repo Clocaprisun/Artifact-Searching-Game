@@ -21,7 +21,8 @@ int main(){
     int maxArtifacts, numOfArtifacts = INITALIZE;
     int i, j = INITALIZE; 
     int loopCondition = LOOP_RESET;
-    char input[100];
+    char *input;
+    input = malloc(100 * sizeof(int *));
     int menuChoice = INITALIZE;
     int userX, userY = INITALIZE;
     int pointCounter = INITALIZE;
@@ -183,7 +184,7 @@ int main(){
                 printf("     %2d", i);
                 for(j=0; j < width; j++){
                     if (i == userX && j == userY){
-                        if(arr[i][j] != EMPTY_SPOT){
+                        if(*(*(arr + i) + j) != EMPTY_SPOT){
                             printf("!");
                         } else {
                             printf("x");
@@ -201,7 +202,7 @@ int main(){
                 for (j = 0; j < width; j++) {
                     /*if array point = user point => "!"*/
                     /*if array EMPTY AND user point => "x"*/
-                    if (arr[i][j] != EMPTY_SPOT) {
+                    if (*(*(arr + i) + j) != EMPTY_SPOT) {
                         printf("?");
                     } else { /*if empty and not user point*/
                         printf(" ");
@@ -215,7 +216,7 @@ int main(){
         int foundAll = 1;
         for (i = 0; i < height; i++){
             for (j = 0; j < width; j++){
-                if (arr[i][j] != EMPTY_SPOT){
+                if (*(*(arr + i) + j) != EMPTY_SPOT){
                     foundAll = 0;
                     break;
                 }
@@ -235,32 +236,44 @@ int main(){
         switch(menuChoice){
             case 1:
                 mapStatus = LOAD_PLAY;
-                printf("x = ");
-                scanf("%d", &userX);
-                printf("\ny = ");
-                scanf("%d", &userY);
+                printf("x = "); 
+                    while (fgets(input, sizeof(input), stdin)){
+                        if (sscanf(input," %d", &userX) == 1){
+                            break;
+                        } else {
+                        printf("Error: x input is in incorrect format, re-enter with an integer value\nx = ");
+                    }
+                }
+                printf("\ny = "); 
+                    while (fgets(input, sizeof(input), stdin)){
+                        if (sscanf(input," %d", &userY) == 1){
+                            break;
+                        } else {
+                        printf("Error: y input is in incorrect format, re-enter with an integer value\ny = ");
+                    }
+                }
                 
                 if (userX < 0 || userX >= height || userY < 0 || userY >= width){
-                    printf("Error: coordinates out of bounds, BAD BAD\n");
+                    printf("Error: coordinates out of bounds\n");
                     continue;
                 }
                 
-                int artifactIndex = arr[userX][userY];
+                int artifactIndex = *(*(arr + userX) + userY);
                 if (artifactIndex != EMPTY_SPOT){
-                    char *foundCode = artifactCodeIndex[artifactIndex];
-                    int pointsEarned = isupper(foundCode[0]) ? 2 : 1;
+                    char *foundCode = *(artifactCodeIndex + artifactIndex);
+                    int pointsEarned = isupper(*(foundCode)) ? 2 : 1;
                     printf("You have found an artifact! (Artifact code: %s, %d point%s)\n", foundCode, pointsEarned, pointsEarned > 1 ? "s" : "");
                     pointCounter += pointsEarned;
-                    arr[userX][userY] = EMPTY_SPOT;
+                    *(*(arr + userX) + userY) = EMPTY_SPOT;
                 }
                 continue;
             case 2:
                 for (i = 0; i < height; i++) {
-                    free(arr[i]);
+                    free(*(arr + i));
                 }
                 free(arr);
                 for (i = 0; i < numOfArtifacts; i++) {
-                    free(artifactCodeIndex[i]);
+                    free(*(artifactCodeIndex + i));
                 }  
                 free(artifactCodeIndex);
                 free(artifactCode);
