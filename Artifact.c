@@ -10,12 +10,21 @@
 #define LOOP_BREAK 1
 #define INITALIZE 0
 
+#define FIRST_LOAD 0
+#define DEBUG 1
+#define LOAD_PLAY 2
+
 int main(){
+    int mapStatus = FIRST_LOAD;
+
     int height, width = INITALIZE;
     int maxArtifacts, numOfArtifacts = INITALIZE;
     int i, j = INITALIZE; 
     int loopCondition = LOOP_RESET;
     char input[100];
+    int menuChoice = INITALIZE;
+    int userX, userY = INITALIZE;
+    int pointCounter = INITALIZE;
     
 
     /*ask user for height and width of map*/
@@ -132,7 +141,16 @@ int main(){
 
     /*Print the map - without anything extra*/
     loopCondition = LOOP_RESET;
+    
     while(!loopCondition){
+        /*if map status is not first load(this can happen after the first load display)*/
+        
+        
+        /*TODO, if an artifact is found(user x and y match a artifact) print ex. You have found an artifact! (Artifact code: T011, 2 points)*/
+
+
+        /*check if user x and y match, then find the code, then check if the letter in the code is upper(2 points) or lower(1 point), display these and add to point counter*/
+
         printf("Map:\n\t");
         for (i = 0; i < width; i++) {
             printf("%d", i / 10);
@@ -146,8 +164,9 @@ int main(){
             printf("-");
         }
         printf("\n");
-
-        for (i = 0; i < height; i++) {
+        
+        if(mapStatus == FIRST_LOAD){
+          for (i = 0; i < height; i++) {
             if (i < 10){
                 printf("     0%d|", i);
             } else {
@@ -157,71 +176,103 @@ int main(){
                 printf(" ");
             }
             printf("\n");
+            }  
+        }
+        if (mapStatus == LOAD_PLAY){
+            for (i = 0; i < height; i++){
+                printf("     %2d", i);
+                for(j=0; j < width; j++){
+                    if (i == userX && j == userY){
+                        if(arr[i][j] != EMPTY_SPOT){
+                            printf("!");
+                        } else {
+                            printf("x");
+                        }
+                    } else {
+                        printf(" ");
+                    }
+                }
+                printf("\n");
+            }
+        }
+        if (mapStatus == DEBUG){
+            for (i = 0; i < height; i++) {
+                printf("     %2d|", i);
+                for (j = 0; j < width; j++) {
+                    /*if array point = user point => "!"*/
+                    /*if array EMPTY AND user point => "x"*/
+                    if (arr[i][j] != EMPTY_SPOT) {
+                        printf("?");
+                    } else { /*if empty and not user point*/
+                        printf(" ");
+                    }
+                }
+                printf("\n");
+            }
+        }
+        
+        /*if all variables are found display a message and exit - maybe a found variables variable and when it equals the numOfVariable*/
+        int foundAll = 1;
+        for (i = 0; i < height; i++){
+            for (j = 0; j < width; j++){
+                if (arr[i][j] != EMPTY_SPOT){
+                    foundAll = 0;
+                    break;
+                }
+            }
+            if (!foundAll){
+            break;
+            }
         }
 
+        if (foundAll){
+            printf("\nCongratulations! You have found all artifacts.\nTotal points: %d\n", pointCounter);
+            loopCondition = LOOP_BREAK; /*exit main loop*/
+        }
 
-        int menuChoice = INITALIZE;
         printf("1: Dig at a spot\n2:Exit\n3:Activate debug mode\n ->");
         scanf("%d", &menuChoice);
         switch(menuChoice){
             case 1:
-                break;
+                mapStatus = LOAD_PLAY;
+                printf("x = ");
+                scanf("%d", &userX);
+                printf("\ny = ");
+                scanf("%d", &userY);
+                
+                if (userX < 0 || userX >= height || userY < 0 || userY >= width){
+                    printf("Error: coordinates out of bounds, BAD BAD\n");
+                    continue;
+                }
+                
+                int artifactIndex = arr[userX][userY];
+                if (artifactIndex != EMPTY_SPOT){
+                    char *foundCode = artifactCodeIndex[artifactIndex];
+                    int pointsEarned = isupper(foundCode[0]) ? 2 : 1;
+                    printf("You have found an artifact! (Artifact code: %s, %d point%s)\n", foundCode, pointsEarned, pointsEarned > 1 ? "s" : "");
+                    pointCounter += pointsEarned;
+                    arr[userX][userY] = EMPTY_SPOT;
+                }
+                continue;
             case 2:
-                int running = 0;
-                break;
-            case 3:
-                // Debug Map Output
-                printf("\nMap:\n\t");
-                for (i = 0; i < width; i++) {
-                    printf("%d", i / 10);
-                }
-                printf("\n\t");
-                for (i = 0; i < width; i++) {
-                    printf("%d", i % 10);
-                }
-                printf("\n\t");
-                for (i = 0; i < width; i++) {
-                    printf("-");
-                }
-                printf("\n");
-
                 for (i = 0; i < height; i++) {
-                    printf(" %4d|", i);
-                    for (j = 0; j < width; j++) {
-                        if (arr[i][j] != EMPTY_SPOT) {
-                            printf("?");
-                        } else {
-                            printf(" ");
-                        }
-                    }
-                    printf("\n");
+                    free(arr[i]);
                 }
-                break;
+                free(arr);
+                for (i = 0; i < numOfArtifacts; i++) {
+                    free(artifactCodeIndex[i]);
+                }  
+                free(artifactCodeIndex);
+                free(artifactCode);
+                return EXIT_SUCCESS;
+            case 3:
+                printf("Debug mode activated \n\n");
+                mapStatus = DEBUG;
+                continue;
         }
-    }
-    
-
-    /*STUPID CHAT THING TO PRINT THE STUFF SO IK IM NOT INSANEEEE AHAHAHA*/
-    printf("\nArtifact Codes and Their Locations:\n");
-
-    for (i = 0; i < numOfArtifacts; i++) {
-        printf("Code %s is at positions:\n", artifactCodeIndex[i]);
-        int found = 0;
-        for (int x = 0; x < height; x++) {
-            for (int y = 0; y < width; y++) {
-                if (arr[x][y] == i) {
-                    printf("  (%d, %d)\n", x, y);
-                    found = 1;
-                }
-            }
-        }
-        if (!found) {
-            printf("  (Not placed on the grid)\n");
-        }
-        printf("\n");
-    }  
+    } 
 return EXIT_SUCCESS;
-    }
+}
 
 /*
 Extra things:
