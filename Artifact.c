@@ -4,6 +4,11 @@
 #include <string.h>
 #include <math.h>
 
+#define INITALIZE 0
+
+#define LOOP_RESET 0
+#define LOOP_BREAK 1
+
 #define MAX_SIZE 40
 #define MIN_SIZE 2
 
@@ -11,32 +16,44 @@
 #define FOUND_TREASURE -2
 #define OUT_OF_RANGE -3
 
-#define LOOP_RESET 0
-#define LOOP_BREAK 1
-#define INITALIZE 0
-
 #define FIRST_LOAD 0
 #define DEBUG 1
 #define LOAD_PLAY 2
 
 int main(){
     int mapStatus = FIRST_LOAD;
-    int height, width = INITALIZE;
-    int maxArtifacts, numOfArtifacts = INITALIZE;
-    int i, j = INITALIZE; 
+    int height = INITALIZE;
+    int width = INITALIZE;
+    int maxArtifacts = INITALIZE;
+    int numOfArtifacts = INITALIZE;
+    int i = INITALIZE; 
+    int j = INITALIZE; 
     int loopCondition = LOOP_RESET;
-    char *input;
-    input = malloc(100 * sizeof(int *));
     int menuChoice = INITALIZE;
-    int userX, userY = INITALIZE;
+    int userX = INITALIZE; 
+    int userY = INITALIZE;
     int pointCounter = INITALIZE;
-    int distance;
+    int pointsEarned = INITALIZE;
+    int artifactIndex = INITALIZE;
+    int foundAll = INITALIZE;
+    int min = INITALIZE;
+    int exists = INITALIZE;
+    int *artifactx;
+    int *artifacty;
+    int *distance;
+    char *foundCode;
+    int **arr;
+    int **digSite;
+    char *artifactCode;
+    char **artifactCodeIndex;
+    char *input;
     
+    input = malloc(100 * sizeof(int *));
 
     /*ask user for height and width of map*/
     while (!loopCondition){
         printf("Enter map height (2 - 40): "); 
-        while (fgets(input, sizeof(input), stdin)){
+        while (fgets(input, 100, stdin)){
             if (sscanf(input," %d", &height) == 1){
                 break;
             } else {
@@ -51,7 +68,7 @@ int main(){
         
 
         printf("Enter map width (2 - 40): "); 
-        while (fgets(input, sizeof(input), stdin)){
+        while (fgets(input, 100, stdin)){
             if (sscanf(input," %d", &width) == 1){
                 break;
             } else {
@@ -68,7 +85,6 @@ int main(){
 
 
     /*creates a 2d array based on height and width*/
-    int **arr;
     arr = malloc(height * sizeof(int *));
     for (i = 0; i < height; i++) {
         *(arr + i) = malloc(width * sizeof(int));
@@ -77,13 +93,15 @@ int main(){
         }
     }
 
-    int **digSite = malloc(height * sizeof(int *));
+    digSite = malloc(height * sizeof(int *));
     for (i = 0; i < height; i++){
         *(digSite + i) = malloc(width * sizeof(int));
         for (j = 0; j < width; j++) {
-            *(*(digSite + i) + j) = EMPTY_SPOT;  // initially nothing dug
+            *(*(digSite + i) + j) = EMPTY_SPOT;  /* initially nothing dug*/
         }
     }
+
+    artifactx = malloc(numOfArtifacts * sizeof(int)); artifacty = malloc(numOfArtifacts * sizeof(int));
     
     /*creates the artifact amount*/
     maxArtifacts = (height * width); /*upper bound is height * width*/
@@ -108,21 +126,23 @@ int main(){
 
 
     /* user adds a code to the artifact(s)*/
-    char *artifactCode = malloc(5 * sizeof(char)); /*an array to store the artifact code - useful for validity and such and such*/
-    char **artifactCodeIndex = malloc(numOfArtifacts * sizeof(char *)); /*an array to store the artifact codes*/
+    artifactCode = malloc(5 * sizeof(char)); /*an array to store the artifact code - useful for validity and such and such*/
+    artifactCodeIndex = malloc(numOfArtifacts * sizeof(char *)); /*an array to store the artifact codes*/
     for (i=0; i<numOfArtifacts; i++){
         *(artifactCodeIndex + i) = malloc(5 * sizeof(char));
-        while(1){
+        loopCondition = LOOP_RESET;
+        while(!loopCondition){
             printf("Code for atrifact %d: ", i + 1); 
             scanf("%4s", artifactCode);
 
-            if (!isalpha(*(artifactCode)) || !isdigit(*(artifactCode + 1)) || !isdigit(*(artifactCode + 2)) || !isdigit(*(artifactCode + 3)) || *(artifactCode + 4) != '\0') {
+            if (!isalpha((unsigned char) * (artifactCode)) || !isdigit((unsigned char) * (artifactCode + 1)) || !isdigit((unsigned char) * (artifactCode + 2)) || !isdigit((unsigned char) * (artifactCode + 3)) || ((unsigned char) * (artifactCode + 4)) != '\0') {
             printf("Error: input is in incorrect format, re-enter with a valid code (ex. S743, y824)\n");
             continue;
+        } else {
+            loopCondition = LOOP_BREAK;
         }
 
         /*FIX THIS BRUVV */
-        int exists = 0;
         for (j = 0; j < i; j++) {
             if (strcmp(artifactCode, *(artifactCodeIndex + j)) == 0) {
                 exists = 1;
@@ -141,9 +161,9 @@ int main(){
 
     /*put artifacts into random spot in the 2d array*/
     for (i = 0; i < numOfArtifacts; i++){
-        int artifactx = rand() % (height); int artifacty = rand() % (width); /* random % (max - min + 1) + min | min = 0 */
-        if (*(*(arr + artifactx) + artifacty) == -1) {
-            *(*(arr + artifactx) + artifacty) = i;
+        *(artifacty + i) = rand() % (height); *(artifactx + i) = rand() % (width); /* random % (max - min + 1) + min | min = 0 */
+        if (*(*(arr + *(artifacty + i)) + *(artifactx + i)) == EMPTY_SPOT) {
+            *(*(arr + *(artifacty + i)) + *(artifactx + i)) = i;
         } else {
             i--;
         }
@@ -152,16 +172,7 @@ int main(){
 
     /*Print the map - without anything extra*/
     loopCondition = LOOP_RESET;
-    
     while(!loopCondition){
-        /*if map status is not first load(this can happen after the first load display)*/
-        
-        
-        /*TODO, if an artifact is found(user x and y match a artifact) print ex. You have found an artifact! (Artifact code: T011, 2 points)*/
-
-
-        /*check if user x and y match, then find the code, then check if the letter in the code is upper(2 points) or lower(1 point), display these and add to point counter*/
-
         printf("Map:\n\t");
         for (i = 0; i < width; i++) {
             printf("%d", i / 10);
@@ -227,24 +238,21 @@ int main(){
         }
         
         /*if all variables are found display a message and exit - maybe a found variables variable and when it equals the numOfVariable*/
-        int foundAll = 1;
+        foundAll = 0;
         for (i = 0; i < height; i++){
             for (j = 0; j < width; j++){
-                if (*(*(arr + i) + j) != EMPTY_SPOT){
-                    foundAll = 0;
-                    break;
+                if (*(*(arr + i) + j) == FOUND_TREASURE){
+                    foundAll ++;
                 }
-            }
-            if (!foundAll){
-            break;
-            }
+            }  
         }
-
-        if (foundAll){
+        if (foundAll == numOfArtifacts){
             printf("\nCongratulations! You have found all artifacts.\nTotal points: %d\n", pointCounter);
             loopCondition = LOOP_BREAK; /*exit main loop*/
+            continue;
         }
 
+        menuChoice = 0;
         printf("1: Dig at a spot\n2: Exit\n3: Activate debug mode\n -> ");
         scanf("%d", &menuChoice);
         while (getchar() != '\n');
@@ -273,10 +281,10 @@ int main(){
                     continue;
                 }
                 
-                int artifactIndex = *(*(arr + userY) + userX);
+                artifactIndex = *(*(arr + userY) + userX);
                 if (artifactIndex != EMPTY_SPOT && artifactIndex != FOUND_TREASURE){
-                    char *foundCode = *(artifactCodeIndex + artifactIndex);
-                    int pointsEarned = isupper(*(foundCode)) ? 2 : 1;
+                    foundCode = *(artifactCodeIndex + artifactIndex);
+                    pointsEarned = isupper((unsigned char) * (foundCode)) ? 2 : 1;
                     printf("You have found an artifact! (Artifact code: %s, %d point%s)\n", foundCode, pointsEarned, pointsEarned > 1 ? "s" : "");
                     pointCounter += pointsEarned;
                     *(*(arr + userY) + userX) = FOUND_TREASURE;
@@ -286,68 +294,47 @@ int main(){
                 } else if (*(*(digSite + userY) + userX) != EMPTY_SPOT){
                     printf("You already dug here\n");
                 } else {
-                    for (i = 0; i < height; i++){
-                        for (j = 0; j < width; j++){
-                            if ((*(*(arr + i) + j) != EMPTY_SPOT) && (*(*(arr + i) + j) != FOUND_TREASURE)){
-                                int dx = userX - i;
-                                int dy = userY - j;
-                                distance = distance = (int)round(sqrt((userX - artifactX) * (userX - artifactX) + (userY - artifactY) * (userY - artifactY)));
-;
-                            }
+                    distance = malloc(numOfArtifacts * sizeof(int));
+                    for (i = 0; i < numOfArtifacts; i++){
+                        *(distance + i) = (int)(sqrt((userX - *(artifactx + i)) * (userX - *(artifactx + i)) + (userY - *(artifacty + i)) * (userY - *(artifacty + i))));   
+                    }
+                    min = 100;
+                    for (i=0; i < numOfArtifacts; i++){
+                        if (*(distance + i) < min){
+                            min = *(distance + i);
                         }
                     }
+                    free(distance);
+                    if (min <= 9){
+                        *(*(arr + userY) + userX) = min;
+                        *(*(digSite + userY) + userX) = min;
+                    } else if (min > 9) {
+                        *(*(arr + userY) + userX) = OUT_OF_RANGE;
+                        *(*(digSite + userY) + userX) = OUT_OF_RANGE;
+                    }
                 }
-                if (distance <= 9){
-                    *(*(arr + userY) + userX) = distance;
-                    *(*(digSite + userY) + userX) = distance;
-                } else {
-                    *(*(arr + userY) + userX) = OUT_OF_RANGE;
-                    *(*(digSite + userY) + userX) = OUT_OF_RANGE;
-                }
+                
                 continue;
             case 2:
-                for (i = 0; i < height; i++) {
-                    free(*(arr + i));
-                    free(*(digSite + i));
-                }
-                free(digSite);
-                free(arr);
-                for (i = 0; i < numOfArtifacts; i++) {
-                    free(*(artifactCodeIndex + i));
-                }  
-                free(artifactCodeIndex);
-                free(artifactCode);
-                printf("Exiting...");
-                return EXIT_SUCCESS;
+                loopCondition = LOOP_BREAK;
+                break;
             case 3:
                 printf("Debug mode activated \n\n");
                 mapStatus = DEBUG;
                 continue;
         }
     } 
-return EXIT_SUCCESS;
+    for (i = 0; i < height; i++) {
+        free(*(arr + i));
+        free(*(digSite + i));
+    }
+    free(digSite);
+    free(arr);
+    for (i = 0; i < numOfArtifacts; i++) {
+        free(*(artifactCodeIndex + i));
+    }  
+    free(artifactCodeIndex);
+    free(artifactCode);
+    printf("Exiting...");
+    return EXIT_SUCCESS;
 }
-
-/*
-Extra things:
-- error handling
-    - game map must be big enough
-    EOF inputs are properly caught and handled
-    artifact codes are valid/not duplicated
-    each assigned location for an artifact is not duplicated
-    all user input is valid
-    formula for distance
-        - square root((player input x - artifact y)^2 + (player input y - artifact y)^2)
-        - if found do a ! symbol
-        - debug mode shows location of artifacts
-
-
-
-- it always accepts the case input when you dig, i will press 1 for the menu and it will do an error message for x = and then let me ask after
-- there is a space between x and y inputs
-- have to have the number of spaces closest to the nearest artifact, ex. if i choose a space 2 away it will have a 2, formula for distance 
-        - square root((player input x - artifact y)^2 + (player input y - artifact y)^2)
-- when an artifact is found it stops showing up on the debug mode, instead it should chnage to a !
-- if a space is 10 away from any artifct and user guesses it there is a #
-- it only shows the current dig, make an array that stores digs and then compare those
-*/
