@@ -2,10 +2,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <math.h>
 
 #define MAX_SIZE 40
 #define MIN_SIZE 2
+
 #define EMPTY_SPOT -1
+#define FOUND_TREASURE -2
+#define OUT_OF_RANGE -3
+
 #define LOOP_RESET 0
 #define LOOP_BREAK 1
 #define INITALIZE 0
@@ -16,7 +21,6 @@
 
 int main(){
     int mapStatus = FIRST_LOAD;
-
     int height, width = INITALIZE;
     int maxArtifacts, numOfArtifacts = INITALIZE;
     int i, j = INITALIZE; 
@@ -26,16 +30,17 @@ int main(){
     int menuChoice = INITALIZE;
     int userX, userY = INITALIZE;
     int pointCounter = INITALIZE;
+    int distance;
     
 
     /*ask user for height and width of map*/
     while (!loopCondition){
-        printf("Enter map height: "); 
+        printf("Enter map height (2 - 40): "); 
         while (fgets(input, sizeof(input), stdin)){
             if (sscanf(input," %d", &height) == 1){
                 break;
             } else {
-                printf("Error: height input is in incorrect format, re-enter with an integer value\nEnter map height: ");
+                printf("Error: height input is in incorrect format, re-enter with an integer value\nEnter map height (2 - 40): ");
             }
         }
         /*checks if height is out of bounds*/
@@ -45,12 +50,12 @@ int main(){
         }
         
 
-        printf("Enter map width: "); 
+        printf("Enter map width (2 - 40): "); 
         while (fgets(input, sizeof(input), stdin)){
             if (sscanf(input," %d", &width) == 1){
                 break;
             } else {
-                printf("Error: width input is in incorrect format, re-enter with an integer value\nEnter map width: ");
+                printf("Error: width input is in incorrect format, re-enter with an integer value\nEnter map width (2 - 40): ");
             }
         }
         /*checks if width is out of bounds*/
@@ -72,13 +77,20 @@ int main(){
         }
     }
 
-
+    int **digSite = malloc(height * sizeof(int *));
+    for (i = 0; i < height; i++){
+        *(digSite + i) = malloc(width * sizeof(int));
+        for (j = 0; j < width; j++) {
+            *(*(digSite + i) + j) = EMPTY_SPOT;  // initially nothing dug
+        }
+    }
+    
     /*creates the artifact amount*/
     maxArtifacts = (height * width); /*upper bound is height * width*/
     loopCondition = LOOP_RESET;
     while(!loopCondition){
         /*asks user for an amount of artifacts, checks validity*/
-        printf("Enter the number of artifacts: "); 
+        printf("Enter the number of artifacts (1 - %d): ", maxArtifacts); 
         while (fgets(input, sizeof(input), stdin)){
             if (sscanf(input," %d", &numOfArtifacts) == 1){
                 break;
@@ -100,10 +112,8 @@ int main(){
     char **artifactCodeIndex = malloc(numOfArtifacts * sizeof(char *)); /*an array to store the artifact codes*/
     for (i=0; i<numOfArtifacts; i++){
         *(artifactCodeIndex + i) = malloc(5 * sizeof(char));
-
-
         while(1){
-            printf("Code for atrifact %d:", i + 1); 
+            printf("Code for atrifact %d: ", i + 1); 
             scanf("%4s", artifactCode);
 
             if (!isalpha(*(artifactCode)) || !isdigit(*(artifactCode + 1)) || !isdigit(*(artifactCode + 2)) || !isdigit(*(artifactCode + 3)) || *(artifactCode + 4) != '\0') {
@@ -111,7 +121,7 @@ int main(){
             continue;
         }
 
-
+        /*FIX THIS BRUVV */
         int exists = 0;
         for (j = 0; j < i; j++) {
             if (strcmp(artifactCode, *(artifactCodeIndex + j)) == 0) {
@@ -181,14 +191,14 @@ int main(){
         }
         if (mapStatus == LOAD_PLAY){
             for (i = 0; i < height; i++){
-                printf("     %2d", i);
+                printf("     %2d|", i);
                 for(j=0; j < width; j++){
-                    if (i == userX && j == userY){
-                        if(*(*(arr + i) + j) != EMPTY_SPOT){
-                            printf("!");
-                        } else {
-                            printf("x");
-                        }
+                    if(*(*(digSite + i) + j) == FOUND_TREASURE){
+                        printf("!");
+                    } else if (*(*(digSite + i) + j) >= 1 && *(*(digSite + i) + j) <= 9){
+                        printf("%d", *(*(digSite + i) + j));
+                    } else if (*(*(digSite + i) + j) == OUT_OF_RANGE){
+                        printf("#");
                     } else {
                         printf(" ");
                     }
@@ -200,11 +210,15 @@ int main(){
             for (i = 0; i < height; i++) {
                 printf("     %2d|", i);
                 for (j = 0; j < width; j++) {
-                    /*if array point = user point => "!"*/
-                    /*if array EMPTY AND user point => "x"*/
-                    if (*(*(arr + i) + j) != EMPTY_SPOT) {
+                    if (*(*(digSite + i) + j) == FOUND_TREASURE){
+                        printf("!");
+                    } else if (*(*(digSite + i) + j) >= 1 && (*(*(digSite + i) + j) <= 9)) {
+                        printf("%d",*(*(digSite + i) + j));
+                    } else if (*(*(digSite + i) + j) == OUT_OF_RANGE){
+                        printf("#");
+                    } else if (*(*(arr + i) + j) != EMPTY_SPOT && (*(*(arr + i) + j) != FOUND_TREASURE)){ /*if empty and not user point*/
                         printf("?");
-                    } else { /*if empty and not user point*/
+                    } else {
                         printf(" ");
                     }
                 }
@@ -231,13 +245,14 @@ int main(){
             loopCondition = LOOP_BREAK; /*exit main loop*/
         }
 
-        printf("1: Dig at a spot\n2:Exit\n3:Activate debug mode\n ->");
+        printf("1: Dig at a spot\n2: Exit\n3: Activate debug mode\n -> ");
         scanf("%d", &menuChoice);
+        while (getchar() != '\n');
         switch(menuChoice){
             case 1:
                 mapStatus = LOAD_PLAY;
                 printf("x = "); 
-                    while (fgets(input, sizeof(input), stdin)){
+                    while (fgets(input, 100, stdin)){
                         if (sscanf(input," %d", &userX) == 1){
                             break;
                         } else {
@@ -245,7 +260,7 @@ int main(){
                     }
                 }
                 printf("\ny = "); 
-                    while (fgets(input, sizeof(input), stdin)){
+                    while (fgets(input, 100, stdin)){
                         if (sscanf(input," %d", &userY) == 1){
                             break;
                         } else {
@@ -258,25 +273,51 @@ int main(){
                     continue;
                 }
                 
-                int artifactIndex = *(*(arr + userX) + userY);
-                if (artifactIndex != EMPTY_SPOT){
+                int artifactIndex = *(*(arr + userY) + userX);
+                if (artifactIndex != EMPTY_SPOT && artifactIndex != FOUND_TREASURE){
                     char *foundCode = *(artifactCodeIndex + artifactIndex);
                     int pointsEarned = isupper(*(foundCode)) ? 2 : 1;
                     printf("You have found an artifact! (Artifact code: %s, %d point%s)\n", foundCode, pointsEarned, pointsEarned > 1 ? "s" : "");
                     pointCounter += pointsEarned;
-                    *(*(arr + userX) + userY) = EMPTY_SPOT;
+                    *(*(arr + userY) + userX) = FOUND_TREASURE;
+                    *(*(digSite + userY) + userX) = FOUND_TREASURE;
+                } else if (*(*(digSite + userY) + userX) == FOUND_TREASURE){
+                    printf("You have already found this artifact\n");
+                } else if (*(*(digSite + userY) + userX) != EMPTY_SPOT){
+                    printf("You already dug here\n");
+                } else {
+                    for (i = 0; i < height; i++){
+                        for (j = 0; j < width; j++){
+                            if ((*(*(arr + i) + j) != EMPTY_SPOT) && (*(*(arr + i) + j) != FOUND_TREASURE)){
+                                int dx = userX - i;
+                                int dy = userY - j;
+                                distance = distance = (int)round(sqrt((userX - artifactX) * (userX - artifactX) + (userY - artifactY) * (userY - artifactY)));
+;
+                            }
+                        }
+                    }
+                }
+                if (distance <= 9){
+                    *(*(arr + userY) + userX) = distance;
+                    *(*(digSite + userY) + userX) = distance;
+                } else {
+                    *(*(arr + userY) + userX) = OUT_OF_RANGE;
+                    *(*(digSite + userY) + userX) = OUT_OF_RANGE;
                 }
                 continue;
             case 2:
                 for (i = 0; i < height; i++) {
                     free(*(arr + i));
+                    free(*(digSite + i));
                 }
+                free(digSite);
                 free(arr);
                 for (i = 0; i < numOfArtifacts; i++) {
                     free(*(artifactCodeIndex + i));
                 }  
                 free(artifactCodeIndex);
                 free(artifactCode);
+                printf("Exiting...");
                 return EXIT_SUCCESS;
             case 3:
                 printf("Debug mode activated \n\n");
@@ -299,4 +340,14 @@ Extra things:
         - square root((player input x - artifact y)^2 + (player input y - artifact y)^2)
         - if found do a ! symbol
         - debug mode shows location of artifacts
+
+
+
+- it always accepts the case input when you dig, i will press 1 for the menu and it will do an error message for x = and then let me ask after
+- there is a space between x and y inputs
+- have to have the number of spaces closest to the nearest artifact, ex. if i choose a space 2 away it will have a 2, formula for distance 
+        - square root((player input x - artifact y)^2 + (player input y - artifact y)^2)
+- when an artifact is found it stops showing up on the debug mode, instead it should chnage to a !
+- if a space is 10 away from any artifct and user guesses it there is a #
+- it only shows the current dig, make an array that stores digs and then compare those
 */
