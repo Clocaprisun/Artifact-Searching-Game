@@ -25,3 +25,4 @@ in c language using pointers and pointer arithmetic
 
 - /src
   - Artifact.c
+  - Makefile
