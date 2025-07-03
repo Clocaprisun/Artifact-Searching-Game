@@ -3,7 +3,7 @@ Artifact searching game where the user specifies the game map and can guess coor
 in c language using pointers and pointer arithmetic
 
 ## Features
--user input
+- user input
     - height and length of game map
     - amount of artifacts to be found - these are radomly placed in the game map and the user does not know where they are
     - artifact codes (must be in this format: S765, u475 etc) 
